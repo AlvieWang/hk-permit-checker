@@ -6,11 +6,18 @@
 """
 
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import os
 
 app = Flask(__name__)
-CORS(app)  # 允许跨域请求
+
+# 手动实现 CORS（无需 flask-cors 依赖）
+@app.after_request
+def after_request(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
+
 
 # 模拟AI Agent的对话逻辑
 class PermitAgent:
@@ -76,12 +83,17 @@ class PermitAgent:
                 'progress': 0
             }
 
+
 # 创建Agent实例
 agent = PermitAgent()
 
-@app.route('/api/chat', methods=['POST'])
+
+@app.route('/api/chat', methods=['POST', 'OPTIONS'])
 def chat():
     """对话API接口"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
     data = request.json
     user_message = data.get('message', '')
     session_id = data.get('session_id', 'default')
@@ -91,10 +103,12 @@ def chat():
     
     return jsonify(response)
 
+
 @app.route('/api/health')
 def health():
     """健康检查"""
     return jsonify({'status': 'ok', 'service': 'hk-permit-checker-api'})
+
 
 @app.route('/')
 def root():
@@ -107,6 +121,7 @@ def root():
             'health': '/api/health (GET)'
         }
     })
+
 
 if __name__ == '__main__':
     # PythonAnywhere 会自动处理端口
