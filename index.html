@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深圳公安出入境 - 港澳通行证材料自查系统</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="top-bar">
+        <div class="top-bar-content">
+            <span>🏛️ 深圳公安出入境服务大厅</span>
+            <span class="time" id="current-time"></span>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 左侧：办事指南 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>📋 办事指南</h2>
+            </div>
+            <div class="guidelines">
+                <div class="guide-item active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="guide-text">
+                        <h3>预约办理</h3>
+                        <p>通过"深圳公安"小程序预约</p>
+                    </div>
+                </div>
+                <div class="guide-item" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="guide-text">
+                        <h3>准备材料</h3>
+                        <p>身份证、照片回执等</p>
+                    </div>
+                </div>
+                <div class="guide-item" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="guide-text">
+                        <h3>现场办理</h3>
+                        <p>按预约时间到达大厅</p>
+                    </div>
+                </div>
+                <div class="guide-item" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="guide-text">
+                        <h3>领取证件</h3>
+                        <p>7-10个工作日后领取</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 材料清单 -->
+            <div class="material-checklist">
+                <h3>📝 材料清单</h3>
+                <div class="checklist-item" id="item-id-card">
+                    <span class="checkbox">☐</span>
+                    <span>居民身份证原件</span>
+                </div>
+                <div class="checklist-item" id="item-photo">
+                    <span class="checkbox">☐</span>
+                    <span>照片回执</span>
+                </div>
+                <div class="checklist-item" id="item-form">
+                    <span class="checkbox">☐</span>
+                    <span>申请表</span>
+                </div>
+                <div class="checklist-item" id="item-appointment">
+                    <span class="checkbox">☐</span>
+                    <span>预约确认</span>
+                </div>
+            </div>
+
+            <!-- 温馨提示 -->
+            <div class="tips">
+                <h3>💡 温馨提示</h3>
+                <ul>
+                    <li>办公时间：周一至周六 9:00-12:00, 14:00-18:00</li>
+                    <li>地址：龙岗区德政路6号</li>
+                    <li>咨询电话：0755-83195555</li>
+                    <li>费用：工本费约50元，签注约15元/次</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 右侧：对话界面 -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="agent-avatar">🧑💼</div>
+                <div class="agent-info">
+                    <h2>出入境业务智能助手</h2>
+                    <span class="status">● 在线</span>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chat-messages">
+                <!-- 消息会通过JS动态添加 -->
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="chat-input">
+                <div class="input-wrapper">
+                    <input type="text" id="user-input" placeholder="请输入您的回答..." onkeypress="handleKeyPress(event)">
+                    <button id="send-btn" onclick="sendUserMessage()">
+                        <span>发送</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="quickAction('如何预约')">📅 如何预约</button>
+                    <button class="quick-btn" onclick="quickAction('签注是什么')">📖 了解签注</button>
+                    <button class="quick-btn" onclick="quickAction('重新开始')">🔄 重新开始</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部信息栏 -->
+    <div class="footer">
+        <div class="footer-content">
+            <span>深圳市公安局出入境管理局</span>
+            <span>|</span>
+            <span>服务热线：12367</span>
+            <span>|</span>
+            <span>本系统仅提供材料自查参考，具体以现场要求为准</span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
