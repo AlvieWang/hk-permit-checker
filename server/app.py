@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""
+港澳通行证材料自查系统 - 后端API服务
+提供智能对话能力，调用AI模型进行自然语言交互
+"""
+
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
+import os
+
+app = Flask(__name__, static_folder='..', static_url_path='')
+CORS(app)  # 允许跨域请求
+
+# 模拟AI Agent的对话逻辑
+class PermitAgent:
+    def __init__(self):
+        self.state = {}
+        
+    def process_message(self, user_message, session_id):
+        """处理用户消息，返回Agent回复"""
+        
+        # 简单的意图识别
+        user_lower = user_message.lower()
+        
+        # 关键词匹配和回复
+        if any(word in user_lower for word in ['你好', '您好', 'hello', 'hi']):
+            return {
+                'reply': '您好，欢迎咨询港澳通行证办理业务。我是出入境业务智能助手，将通过对话帮助您核查所需材料。\n\n请问您的户籍所在地是否为广东省？',
+                'options': ['是', '否'],
+                'progress': 10
+            }
+        
+        elif any(word in user_lower for word in ['是', 'yes', '对的', '没错']):
+            if '户籍' in str(self.state.get(session_id, {})):
+                return {
+                    'reply': '好的，确认您为广东省户籍。\n\n请问本次申请是「首次办理」、「续签/换证」还是「补办（丢失）」？',
+                    'options': ['首次办理', '续签/换证', '补办'],
+                    'progress': 20
+                }
+            else:
+                return {
+                    'reply': '请问您的户籍所在地是否为广东省？',
+                    'options': ['是', '否'],
+                    'progress': 10
+                }
+        
+        elif any(word in user_lower for word in ['首次', '第一次', '新办']):
+            return {
+                'reply': '好的，确认为首次办理。\n\n请问申请人是否已满16周岁？',
+                'options': ['是', '否'],
+                'progress': 30
+            }
+        
+        elif any(word in user_lower for word in ['预约', '怎么预约', '如何预约']):
+            return {
+                'reply': '''📅 预约流程如下：\n\n<strong>方式一：微信小程序「深圳公安」</strong>\n1. 微信搜索「深圳公安」小程序\n2. 点击「出入境」→「出入境预约」\n3. 选择「龙岗区出入境服务大厅」\n4. 选择办理日期和时间段\n5. 填写信息，提交预约\n6. 预约成功后请截图保存\n\n<strong>方式二：「移民局12367」App</strong>\n1. 下载「移民局12367」App\n2. 登录后选择「预约办证」\n3. 选择大厅及时间段\n4. 提交并截图保存\n\n请问是否继续材料自查？''',
+                'options': ['继续', '好的'],
+                'progress': 50
+            }
+        
+        elif any(word in user_lower for word in ['签注', '什么是签注']):
+            return {
+                'reply': '''📖 签注说明：\n\n<strong>港澳通行证 = 通行证 + 签注</strong>\n\n<strong>1️⃣ 通行证（卡片）</strong>\n您的出入资格证明，工本费约50元。\n\n<strong>2️⃣ 签注（许可次数）</strong>\n每次去港澳需要有签注。\n\n<strong>常见签注类型：</strong>\n• 个人旅游（G签）- 广东户籍可办\n• 三个月一次 - 约15元\n• 一年一次 - 约15元\n• 一年两次 - 约30元\n\n💡 建议：首次办证时可同时申请签注！\n\n请问是否继续材料自查？''',
+                'options': ['继续', '好的'],
+                'progress': 50
+            }
+        
+        elif any(word in user_lower for word in ['材料', '清单', '准备']):
+            return {
+                'reply': '''📝 港澳通行证办理材料清单：\n\n<strong>必备基础材料（所有人）：</strong>\n1. 居民身份证原件（未满16岁用户口本）\n2. 照片回执（现场拍或提前准备）\n3. 《中国公民出入境证件申请表》\n4. 预约确认信息\n\n<strong>特殊情况额外材料：</strong>\n• 非广东户籍：居住证或就业/就学证明\n• 未满16岁：监护人身份证+户口本\n• 续签/换证：旧证件\n\n请问您想开始材料自查吗？''',
+                'options': ['开始自查', '了解更多'],
+                'progress': 60
+            }
+        
+        elif any(word in user_lower for word in ['重新', '开始', '重启']):
+            self.state[session_id] = {}
+            return {
+                'reply': '好的，已重置对话。\n\n您好，欢迎咨询港澳通行证办理业务。请问您的户籍所在地是否为广东省？',
+                'options': ['是', '否'],
+                'progress': 10
+            }
+        
+        else:
+            # 默认回复
+            return {
+                'reply': '抱歉，我不太理解您的意思。请您选择下面的选项，或者输入以下关键词：\n\n• "预约" - 了解如何预约\n• "签注" - 了解什么是签注\n• "材料" - 查看材料清单\n• "重新开始" - 重新开始对话',
+                'options': ['预约', '签注', '材料', '重新开始'],
+                'progress': 0
+            }
+    
+    def update_state(self, session_id, key, value):
+        """更新会话状态"""
+        if session_id not in self.state:
+            self.state[session_id] = {}
+        self.state[session_id][key] = value
+
+# 创建Agent实例
+agent = PermitAgent()
+
+@app.route('/')
+def index():
+    """提供前端页面"""
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    """对话API接口"""
+    data = request.json
+    user_message = data.get('message', '')
+    session_id = data.get('session_id', 'default')
+    
+    # 调用Agent处理消息
+    response = agent.process_message(user_message, session_id)
+    
+    return jsonify(response)
+
+@app.route('/api/health')
+def health():
+    """健康检查"""
+    return jsonify({'status': 'ok', 'service': 'hk-permit-checker-api'})
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
