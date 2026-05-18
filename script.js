@@ -3,7 +3,7 @@
 
 // 配置
 const CONFIG = {
-    API_URL: window.location.origin + '/api/chat',  // 后端API地址
+    API_URL: 'http://alviewang.pythonanywhere.com/api/chat',  // 后端API地址（PythonAnywhere）
     SESSION_ID: 'user_' + Date.now()  // 生成唯一会话ID
 };
 
