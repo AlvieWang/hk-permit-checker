@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>港澳通行证材料自查 - 离线版</title>
+    <style>
+        /* ===== 全局重置 ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", sans-serif;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== 顶部导航 ===== */
+        .top-bar {
+            background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+            color: white;
+            padding: 14px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+            z-index: 100;
+        }
+        .top-bar-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            font-size: 17px;
+            font-weight: bold;
+        }
+        .top-bar-left { display: flex; align-items: center; gap: 10px; }
+        .top-bar-badge {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            font-size: 11px;
+            font-weight: normal;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        #current-time { font-size: 13px; font-weight: normal; opacity: 0.85; }
+
+        /* ===== 主容器 ===== */
+        .container {
+            display: flex;
+            flex: 1;
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+            gap: 20px;
+            width: 100%;
+        }
+
+        /* ===== 左侧边栏 ===== */
+        .sidebar {
+            width: 300px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .sidebar-card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .sidebar-card-title {
+            color: #1565c0;
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e3f2fd;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 进度条 */
+        .progress-wrap {
+            margin-bottom: 4px;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+        .progress-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1565c0, #42a5f5);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        /* 流程步骤 */
+        .guide-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        .guide-item.active {
+            background: #e3f2fd;
+            border-left-color: #1565c0;
+        }
+        .guide-item.completed {
+            background: #e8f5e9;
+            border-left-color: #4caf50;
+        }
+        .step-num {
+            width: 28px;
+            height: 28px;
+            background: #bdbdbd;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-right: 10px;
+            margin-top: 1px;
+        }
+        .guide-item.active .step-num { background: #1565c0; }
+        .guide-item.completed .step-num { background: #4caf50; }
+        .guide-text h4 { font-size: 13px; color: #333; margin-bottom: 2px; }
+        .guide-text p { font-size: 11px; color: #888; }
+
+        /* 材料清单 */
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 9px 10px;
+            margin-bottom: 6px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #555;
+            transition: all 0.3s;
+        }
+        .checklist-item.checked {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .checklist-item .cb {
+            font-size: 17px;
+            margin-right: 8px;
+            transition: all 0.3s;
+        }
+
+        /* 温馨提示 */
+        .tips-card {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+        }
+        .tips-card .sidebar-card-title { color: #e65100; border-bottom-color: #ffe082; }
+        .tip-item {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.7;
+            padding: 3px 0;
+        }
+        .tip-item::before { content: "•  "; color: #ffa000; }
+
+        /* ===== 聊天区域 ===== */
+        .chat-container {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            min-height: 600px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+            color: white;
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .agent-avatar {
+            font-size: 34px;
+            background: rgba(255,255,255,0.15);
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .agent-info h2 { font-size: 17px; margin-bottom: 4px; }
+        .agent-status { font-size: 12px; color: #a5d6a7; display: flex; align-items: center; gap: 5px; }
+        .status-dot {
+            width: 8px; height: 8px;
+            background: #69f0ae;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .offline-badge {
+            margin-left: auto;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            color: rgba(255,255,255,0.85);
+        }
+
+        /* 消息区 */
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f7fa;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-start;
+            animation: fadeSlideIn 0.3s ease;
+        }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message { flex-direction: row-reverse; }
+
+        .msg-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e3f2fd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .user-message .msg-avatar { background: #fff3e0; }
+
+        .msg-body {
+            margin: 0 12px;
+            max-width: 72%;
+        }
+        .msg-meta {
+            font-size: 11px;
+            color: #9e9e9e;
+            margin-bottom: 5px;
+            display: flex;
+            gap: 8px;
+        }
+        .user-message .msg-meta { flex-direction: row-reverse; }
+        .msg-name { font-weight: 600; color: #555; }
+
+        .msg-bubble {
+            background: white;
+            padding: 13px 16px;
+            border-radius: 0 12px 12px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            line-height: 1.75;
+            color: #333;
+            font-size: 14px;
+            white-space: pre-line;
+        }
+        .user-message .msg-bubble {
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            color: white;
+            border-radius: 12px 0 12px 12px;
+        }
+
+        /* 选项按钮 */
+        .msg-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .opt-btn {
+            background: white;
+            border: 1.5px solid #1565c0;
+            color: #1565c0;
+            padding: 7px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.25s;
+            white-space: nowrap;
+        }
+        .opt-btn:hover:not(:disabled) {
+            background: #1565c0;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(21,101,192,0.3);
+        }
+        .opt-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        /* 打字动画 */
+        .typing-bubble {
+            background: white;
+            padding: 13px 18px;
+            border-radius: 0 12px 12px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .dot {
+            width: 8px; height: 8px;
+            background: #90a4ae;
+            border-radius: 50%;
+            animation: bounce 1.2s infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 输入区域 */
+        .chat-input {
+            padding: 16px 20px;
+            background: white;
+            border-top: 1px solid #eceff1;
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        #user-input {
+            flex: 1;
+            padding: 11px 18px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.25s;
+            background: #fafafa;
+        }
+        #user-input:focus { border-color: #1565c0; background: white; }
+
+        #send-btn {
+            background: linear-gradient(135deg, #1565c0, #0d47a1);
+            color: white;
+            border: none;
+            padding: 11px 22px;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.25s;
+            white-space: nowrap;
+        }
+        #send-btn:hover { box-shadow: 0 4px 12px rgba(21,101,192,0.4); transform: translateY(-1px); }
+        #send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .quick-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .quick-btn {
+            background: #f0f4ff;
+            border: 1px solid #c5cae9;
+            padding: 6px 14px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+            color: #3949ab;
+            transition: all 0.2s;
+        }
+        .quick-btn:hover { background: #c5cae9; }
+
+        /* ===== 底部 ===== */
+        .footer {
+            background: #263238;
+            color: rgba(255,255,255,0.65);
+            padding: 12px 30px;
+            text-align: center;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+        .footer a { color: rgba(255,255,255,0.5); text-decoration: none; }
+
+        /* ===== 滚动条 ===== */
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-track { background: transparent; }
+        .chat-messages::-webkit-scrollbar-thumb { background: #bdbdbd; border-radius: 3px; }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 1024px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; }
+            .sidebar-card { flex: 1; min-width: 240px; }
+        }
+        @media (max-width: 640px) {
+            .top-bar-content { font-size: 14px; }
+            .msg-body { max-width: 85%; }
+            .offline-badge { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="top-bar">
+    <div class="top-bar-content">
+        <div class="top-bar-left">
+            🏛️ 深圳公安出入境服务大厅
+            <span class="top-bar-badge">🔒 离线版</span>
+        </div>
+        <span id="current-time"></span>
+    </div>
+</div>
+
+<!-- 主容器 -->
+<div class="container">
+
+    <!-- 左侧边栏 -->
+    <div class="sidebar">
+
+        <!-- 进度卡 -->
+        <div class="sidebar-card">
+            <div class="sidebar-card-title">📊 自查进度</div>
+            <div class="progress-wrap">
+                <div class="progress-label">
+                    <span>当前进度</span>
+                    <span id="progress-pct">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 办理流程 -->
+        <div class="sidebar-card">
+            <div class="sidebar-card-title">📋 办理流程</div>
+            <div class="guide-item active" id="step-1">
+                <div class="step-num">1</div>
+                <div class="guide-text"><h4>预约办理</h4><p>通过"深圳公安"小程序预约</p></div>
+            </div>
+            <div class="guide-item" id="step-2">
+                <div class="step-num">2</div>
+                <div class="guide-text"><h4>准备材料</h4><p>身份证、照片回执等</p></div>
+            </div>
+            <div class="guide-item" id="step-3">
+                <div class="step-num">3</div>
+                <div class="guide-text"><h4>现场办理</h4><p>按预约时间到达大厅</p></div>
+            </div>
+            <div class="guide-item" id="step-4">
+                <div class="step-num">4</div>
+                <div class="guide-text"><h4>领取证件</h4><p>约7个工作日后领取</p></div>
+            </div>
+        </div>
+
+        <!-- 材料清单 -->
+        <div class="sidebar-card">
+            <div class="sidebar-card-title">📝 材料清单</div>
+            <div class="checklist-item" id="cl-idCard">
+                <span class="cb">☐</span><span>居民身份证原件</span>
+            </div>
+            <div class="checklist-item" id="cl-photo">
+                <span class="cb">☐</span><span>照片回执</span>
+            </div>
+            <div class="checklist-item" id="cl-form">
+                <span class="cb">☐</span><span>申请表</span>
+            </div>
+            <div class="checklist-item" id="cl-appt">
+                <span class="cb">☐</span><span>预约确认截图</span>
+            </div>
+        </div>
+
+        <!-- 温馨提示 -->
+        <div class="sidebar-card tips-card">
+            <div class="sidebar-card-title">💡 温馨提示</div>
+            <div class="tip-item">必须提前预约，无预约不受理</div>
+            <div class="tip-item">办公时间：周一至周六 9:00-18:00</div>
+            <div class="tip-item">地址：龙岗区龙翔大道8033-1号</div>
+            <div class="tip-item">服务热线：12367</div>
+            <div class="tip-item">工本费约50元，签注约15元/次</div>
+        </div>
+
+    </div><!-- /sidebar -->
+
+    <!-- 聊天区域 -->
+    <div class="chat-container">
+
+        <!-- 头部 -->
+        <div class="chat-header">
+            <div class="agent-avatar">🧑‍💼</div>
+            <div class="agent-info">
+                <h2>出入境业务智能助手</h2>
+                <div class="agent-status">
+                    <span class="status-dot"></span>
+                    在线服务中
+                </div>
+            </div>
+            <div class="offline-badge">🔒 完全离线 · 无需网络</div>
+        </div>
+
+        <!-- 消息列表 -->
+        <div class="chat-messages" id="chat-messages"></div>
+
+        <!-- 输入区域 -->
+        <div class="chat-input">
+            <div class="input-row">
+                <input type="text" id="user-input" placeholder="请输入您的回答，或点击上方选项…" />
+                <button id="send-btn" onclick="sendUserMessage()">
+                    发送
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="quickSend('如何预约')">📅 如何预约</button>
+                <button class="quick-btn" onclick="quickSend('签注是什么')">📖 了解签注</button>
+                <button class="quick-btn" onclick="quickSend('费用多少钱')">💰 查询费用</button>
+                <button class="quick-btn" onclick="quickSend('重新开始')">🔄 重新开始</button>
+            </div>
+        </div>
+
+    </div><!-- /chat-container -->
+
+</div><!-- /container -->
+
+<!-- 底部 -->
+<div class="footer">
+    深圳市公安局出入境管理局 · 服务热线：12367 · 本系统仅提供材料自查参考，具体以现场要求为准<br>
+    <span style="font-size:11px;opacity:0.5;">离线版 · 数据内置 · 无任何服务器请求</span>
+</div>
+
+<script>
+/* ================================================================
+   港澳通行证材料自查 — 纯前端离线对话引擎
+   将 app_offline.py 的完整逻辑移植到 JavaScript
+   ================================================================ */
+
+// ----------------------------------------------------------------
+// 会话状态
+// ----------------------------------------------------------------
+const session = {
+    step: 'start',
+    data: {}
+};
+
+// ----------------------------------------------------------------
+// 核心对话逻辑（与 Python 版本完全对应）
+// ----------------------------------------------------------------
+function processMessage(userMsg) {
+    const msg = userMsg.toLowerCase().trim();
+    return handleConversation(userMsg, msg);
+}
+
+function handleConversation(original, msg) {
+
+    // ========== 全局关键词（任意步骤均响应）==========
+    if (/重新|重启/.test(msg) || msg === '开始') {
+        session.step = 'start';
+        session.data = {};
+        resetChecklist();
+        return reply(
+            '好的，已重置对话。\n\n您好，欢迎咨询港澳通行证办理业务。请问您的户籍所在地是否为广东省？',
+            ['是', '否'], 5
+        );
+    }
+
+    if (/签注/.test(msg)) {
+        return reply(
+            '📖 签注说明：\n\n<b>港澳通行证 = 通行证（证件本身）+ 签注（出行许可）</b>\n\n<b>1. 通行证（卡片）</b>\n您的出入资格证明，工本费约50元。\n\n<b>2. 签注（许可次数）</b>\n每次赴港澳均需有效签注。\n\n<b>常见签注类型：</b>\n• 个人旅游（G签）—— 广东户籍可申请\n• 三个月一次 — 约15元\n• 一年一次 — 约15元\n• 一年两次 — 约30元\n\n💡 建议：首次办证时同步申请签注，一次搞定！\n\n如需继续材料自查，请选择：',
+            ['继续自查', '重新开始'], 0
+        );
+    }
+
+    if (/费用|多少钱|收费/.test(msg)) {
+        return reply(
+            '💰 收费标准（2024年官方标准）：\n\n<b>往来港澳通行证</b>\n工本费：约50元/证\n\n<b>签注费用</b>\n• 一次有效签注：15元\n• 二次有效签注：30元\n• 短期多次签注：80元\n\n<b>其他费用</b>\n• 现场拍照：免费\n• 快递（可选）：约15-20元\n\n请问是否继续自查？',
+            ['继续自查', '重新开始'], 0
+        );
+    }
+
+    if (/时间|多久|工作日/.test(msg)) {
+        return reply(
+            '⏰ 办理时限：\n\n<b>广东省户籍：</b>\n• 首次办理：约7个工作日\n• 续签/换证：约5个工作日\n\n<b>非广东省户籍：</b>\n• 首次办理：约20个工作日（需核查户籍信息）\n\n<b>领取方式：</b>\n• 邮寄：另加2-3天\n• 自取：凭回执单到原大厅领取\n\n请问是否继续？',
+            ['继续自查', '重新开始'], 0
+        );
+    }
+
+    if (/地址|哪里|大厅/.test(msg)) {
+        return reply(
+            '📍 办理地点：\n\n<b>推荐：龙岗区出入境服务大厅</b>\n地址：深圳市龙岗区龙翔大道8033-1号\n\n<b>办公时间：</b>\n• 周一至周五：9:00-12:00，14:00-18:00\n• 周六：9:00-12:00（需预约）\n\n<b>其他大厅：</b>\n• 深圳市出入境管理局（罗湖区）\n• 各区出入境大厅均可办理\n\n请问是否继续？',
+            ['继续自查', '重新开始'], 0
+        );
+    }
+
+    if (/预约|如何预约/.test(msg) && session.step !== 'show_appointment_guide') {
+        return showAppointmentGuide();
+    }
+
+    // ========== 步骤机器 ==========
+    switch (session.step) {
+
+        // --- 开始 ---
+        case 'start':
+            if (/你好|您好|hello|hi|开始|启动|核查|流程|收费/.test(msg)) {
+                session.step = 'check_guojing';
+                return reply(
+                    '您好，欢迎咨询港澳通行证办理业务！我是出入境业务智能助手，将通过几个简单问题帮您核查材料是否齐全。\n\n请问您的户籍所在地是否为<b>广东省</b>？',
+                    ['是', '否'], 5
+                );
+            }
+            return reply(
+                '您好！我是港澳通行证办理智能助手。\n\n可以帮您：\n• 核查办理材料是否齐全\n• 了解完整办理流程\n• 查询费用标准\n\n请问您需要什么帮助？',
+                ['核查办理材料', '了解办理流程', '查询收费标准'], 0
+            );
+
+        // --- 核查户籍 ---
+        case 'check_guojing':
+            if (/是|广东|广州|深圳|佛山|东莞|珠海|汕头/.test(msg)) {
+                session.data.isGuojing = true;
+                session.step = 'check_first_time';
+                return reply(
+                    '✅ 确认您为广东省户籍（可在深圳异地办理）。\n\n请问本次申请类型是？',
+                    ['首次办理', '续签/换证', '补办（丢失）'], 15
+                );
+            } else if (/否|外地|北京|上海|外省/.test(msg)) {
+                session.data.isGuojing = false;
+                session.step = 'check_first_time';
+                return reply(
+                    '✅ 确认您为非广东省户籍。\n\n请问本次申请类型是？',
+                    ['首次办理', '续签/换证', '补办（丢失）'], 15
+                );
+            }
+            return reply('抱歉，请选择：', ['是', '否'], 5);
+
+        // --- 办理类型 ---
+        case 'check_first_time':
+            if (/首次|第一次|新办/.test(msg)) {
+                session.data.applyType = 'first';
+                session.step = 'check_age';
+                updateChecklist('idCard', false);
+                setGuideStep(2);
+                return reply(
+                    '✅ 确认为<b>首次办理</b>。\n\n请问申请人是否已满<b>16周岁</b>？',
+                    ['是（已满16岁）', '否（未成年）'], 25
+                );
+            } else if (/续签|换证|过期/.test(msg)) {
+                session.data.applyType = 'renew';
+                session.step = 'check_passport';
+                setGuideStep(2);
+                return reply(
+                    '✅ 确认为<b>续签/换证</b>。\n\n请问您是否持有有效的旧版往来港澳通行证？',
+                    ['是', '否（已过期/即将过期）'], 25
+                );
+            } else if (/补办|丢失|遗失/.test(msg)) {
+                session.data.applyType = 'replace';
+                session.step = 'check_loss_report';
+                setGuideStep(2);
+                return reply(
+                    '✅ 确认为<b>证件补办（丢失）</b>。\n\n请问您是否已办理<b>挂失手续</b>？\n（可通过"移民局12367" App 在线挂失）',
+                    ['已办理挂失', '尚未挂失'], 25
+                );
+            }
+            return reply('请选择办理类型：', ['首次办理', '续签/换证', '补办（丢失）'], 15);
+
+        // --- 首次办理：年龄 ---
+        case 'check_age':
+            if (/是|满|成年/.test(msg)) {
+                session.data.isAdult = true;
+                session.step = 'check_id_card';
+                return reply(
+                    '✅ 申请人已满16周岁，可独立办理。\n\n请问您是否携带以下证件之一？',
+                    ['居民身份证原件', '临时身份证', '都没带'], 35
+                );
+            } else if (/否|未成年|小孩|孩子/.test(msg)) {
+                session.data.isAdult = false;
+                session.step = 'check_guardian';
+                return reply(
+                    '✅ 申请人为未成年人，需<b>法定监护人陪同</b>办理。\n\n请问监护人是否陪同？',
+                    ['是，监护人陪同', '否'], 35
+                );
+            }
+            return reply('请选择：', ['是（已满16岁）', '否（未成年）'], 25);
+
+        // --- 未成年人：监护人 ---
+        case 'check_guardian':
+            if (/是|陪同|陪/.test(msg)) {
+                session.data.hasGuardian = true;
+                session.step = 'check_id_card';
+                return reply(
+                    '✅ 监护人陪同办理，需准备：\n• 未成年人居民身份证（或户口本）\n• 监护人居民身份证原件\n• 监护关系证明（如出生医学证明或户口本）\n\n请问以上证件是否齐全？',
+                    ['齐全', '需要补充'], 40
+                );
+            } else {
+                return reply(
+                    '⚠️ 未成年人办理必须有法定监护人陪同，请安排好后再前往大厅。\n\n如有其他疑问，可咨询：12367',
+                    ['重新开始'], 0
+                );
+            }
+
+        // --- 身份证 ---
+        case 'check_id_card':
+            if (/身份证原件|居民身份证|齐全/.test(msg) && !/都没|没带/.test(msg)) {
+                session.data.hasIdCard = true;
+                updateChecklist('idCard', true);
+                session.step = 'check_photo';
+                return reply(
+                    '✅ 已确认携带身份证原件（或监护材料齐全）。\n\n关于照片，请选择您的方式：',
+                    ['现场免费拍照', '自带数字相片回执'], 50
+                );
+            } else if (/临时/.test(msg)) {
+                session.data.hasIdCard = 'temp';
+                updateChecklist('idCard', true);
+                session.step = 'check_photo';
+                return reply(
+                    '✅ 已确认携带临时身份证。\n\n关于照片，请选择您的方式：',
+                    ['现场免费拍照', '自带数字相片回执'], 50
+                );
+            } else {
+                return reply(
+                    '⚠️ <b>身份证原件为必须材料！</b>没有身份证原件无法办理。\n\n请问您的情况是？',
+                    ['回家取身份证后再来', '申请临时身份证', '取消办理'], 35
+                );
+            }
+
+        // --- 照片 ---
+        case 'check_photo':
+            if (/现场|免费拍/.test(msg)) {
+                session.data.photoType = 'onsite';
+                updateChecklist('photo', true);
+                session.step = 'check_form';
+                return reply(
+                    '✅ 选择<b>现场拍照</b>（免费，约5分钟，当天出结果）。\n\n关于申请表，请选择：',
+                    ['现场填写申请表', '提前打印并填好'], 60
+                );
+            } else if (/回执|自带|自备/.test(msg)) {
+                session.data.photoType = 'own';
+                updateChecklist('photo', true);
+                session.step = 'check_form';
+                return reply(
+                    '✅ 已准备好数字相片采集回执。\n\n关于申请表，请选择：',
+                    ['现场填写申请表', '提前打印并填好'], 60
+                );
+            }
+            return reply('请选择拍照方式：', ['现场免费拍照', '自带数字相片回执'], 50);
+
+        // --- 申请表 ---
+        case 'check_form':
+            if (/现场|填写/.test(msg) && !/提前/.test(msg)) {
+                session.data.formType = 'onsite';
+                updateChecklist('form', true);
+                session.step = 'check_appointment';
+                return reply(
+                    '✅ 选择<b>现场填写</b>（有工作人员指导，推荐初次办理者）。\n\n请问您是否已<b>预约</b>？（必须预约才能办理）',
+                    ['已预约', '尚未预约'], 70
+                );
+            } else if (/提前|打印|自带/.test(msg)) {
+                session.data.formType = 'own';
+                updateChecklist('form', true);
+                session.step = 'check_appointment';
+                return reply(
+                    '✅ 已提前准备好申请表。\n\n请问您是否已<b>预约</b>？（必须预约才能办理）',
+                    ['已预约', '尚未预约'], 70
+                );
+            }
+            return reply('请选择填表方式：', ['现场填写申请表', '提前打印并填好'], 60);
+
+        // --- 预约 ---
+        case 'check_appointment':
+            if (/已预约|有预约/.test(msg)) {
+                updateChecklist('appt', true);
+                return finishCheck();
+            } else if (/尚未|没有|没预约/.test(msg)) {
+                session.step = 'show_appointment_guide';
+                return showAppointmentGuide();
+            }
+            return reply('请选择：', ['已预约', '尚未预约'], 70);
+
+        // --- 续签：持有旧证 ---
+        case 'check_passport':
+            if (/是|有|持有/.test(msg)) {
+                session.data.hasOldPassport = true;
+                session.step = 'check_id_card';
+                return reply(
+                    '✅ 请携带旧版往来港澳通行证原件（作为续签依据）。\n\n请问您是否携带<b>居民身份证原件</b>？',
+                    ['是，已携带', '没带身份证'], 40
+                );
+            } else {
+                session.data.hasOldPassport = false;
+                session.step = 'check_id_card';
+                return reply(
+                    '⚠️ 旧证过期/遗失属于不同类型，请说明：\n• 续签：旧证在有效期内或刚过期\n• 补办：旧证已丢失\n\n您是否已携带<b>居民身份证原件</b>？',
+                    ['是，已携带', '没带身份证'], 40
+                );
+            }
+
+        // --- 补办：挂失 ---
+        case 'check_loss_report':
+            if (/已|办理|挂失/.test(msg)) {
+                session.data.hasLossReport = true;
+                session.step = 'check_id_card';
+                return reply(
+                    '✅ 已完成挂失手续。\n\n补办还需提供：\n• 居民身份证原件\n• 书面声明材料（可现场索取表格）\n\n请问是否携带<b>居民身份证原件</b>？',
+                    ['是，已携带', '没带身份证'], 40
+                );
+            } else {
+                return reply(
+                    '⚠️ 请先完成挂失手续！\n\n<b>挂失方式：</b>\n• "移民局12367" App → 在线挂失\n• 到任意出入境大厅窗口挂失\n\n挂失完成后，请回复"已挂失"。',
+                    ['已挂失', '重新开始'], 0
+                );
+            }
+
+        // --- 预约指南 ---
+        case 'show_appointment_guide':
+            if (/继续|已预约|好的|完成/.test(msg)) {
+                updateChecklist('appt', true);
+                return finishCheck();
+            }
+            return showAppointmentGuide();
+
+        default:
+            return reply(
+                '抱歉，我没理解您的意思。请选择一个选项，或输入以下关键词：\n\n• "预约" — 如何预约\n• "签注" — 什么是签注\n• "费用" — 收费标准\n• "时间" — 办理时限\n• "地址" — 办理地点\n• "重新开始" — 重置对话',
+                ['预约', '签注', '费用', '重新开始'], 0
+            );
+    }
+}
+
+// --- 预约指南 ---
+function showAppointmentGuide() {
+    session.step = 'show_appointment_guide';
+    return reply(
+        '📅 <b>预约流程如下：</b>\n\n<b>方式一：微信小程序「深圳公安」</b>\n1. 微信搜索「深圳公安」小程序\n2. 点击「出入境」→「出入境预约」\n3. 选择「龙岗区出入境服务大厅」\n4. 选择办理日期和时间段\n5. 填写信息，提交预约\n6. 预约成功后截图保存\n\n<b>方式二：「移民局12367」App</b>\n1. 下载「移民局12367」App\n2. 登录后选择「预约办证」\n3. 选择大厅及时间段，提交并截图保存\n\n预约完成后，请回复「已预约」。',
+        ['已预约', '继续自查'], 70
+    );
+}
+
+// --- 完成核查 ---
+function finishCheck() {
+    const d = session.data;
+    setGuideStep(3);
+    setGuideCompleted(1);
+    setGuideCompleted(2);
+
+    let checklist = '<b>✅ 必须材料：</b>\n';
+    checklist += '☑ 居民身份证原件（有效期内）\n';
+    if (d.isAdult === false) {
+        checklist += '☑ 监护人居民身份证原件\n';
+        checklist += '☑ 监护关系证明（户口本/出生证）\n';
+    }
+    if (d.hasOldPassport) {
+        checklist += '☑ 旧版往来港澳通行证原件\n';
+    }
+    if (d.hasLossReport) {
+        checklist += '☑ 书面声明（丢失说明，可现场填写）\n';
+    }
+
+    checklist += '\n<b>✅ 照片材料：</b>\n';
+    checklist += (d.photoType === 'onsite')
+        ? '☑ 现场免费拍照（推荐，无需提前准备）\n'
+        : '☑ 数字相片采集回执\n';
+
+    checklist += '\n<b>✅ 申请表格：</b>\n';
+    checklist += (d.formType === 'onsite')
+        ? '☑ 现场填写申请表\n'
+        : '☑ 提前打印并填好的申请表\n';
+
+    checklist += '\n<b>✅ 预约证明：</b>\n';
+    checklist += '☑ 预约成功截图（手机出示即可）';
+
+    const tips = '\n\n<b>📌 重要提示：</b>\n' +
+        '1. 请提前预约，无预约不受理\n' +
+        '2. 出发前再次检查材料清单\n' +
+        '3. 首次办理必须本人到场（录入指纹）\n' +
+        '4. 签注可同时申请，建议一次办好\n' +
+        '5. 现场拍照免费，无需提前拍摄';
+
+    updateChecklist('idCard', true);
+    updateChecklist('photo', true);
+    updateChecklist('form', true);
+    updateChecklist('appt', true);
+
+    return reply(
+        '🎉 <b>材料核查完成！</b>\n\n' + checklist + tips + '\n\n祝您办理顺利！如需重新核查，请点击"重新开始"。',
+        ['重新开始'], 100
+    );
+}
+
+// ----------------------------------------------------------------
+// 回复构建
+// ----------------------------------------------------------------
+function reply(text, options, progress) {
+    return { text, options: options || [], progress: progress || 0 };
+}
+
+// ----------------------------------------------------------------
+// UI 工具函数
+// ----------------------------------------------------------------
+function getTime() {
+    return new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+}
+
+function scrollToBottom() {
+    const c = document.getElementById('chat-messages');
+    if (c) setTimeout(() => { c.scrollTop = c.scrollHeight; }, 80);
+}
+
+function disableAllOptionBtns() {
+    document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+}
+
+function addAgentMessage(text, options, progress) {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'message';
+
+    let optHtml = '';
+    if (options && options.length > 0) {
+        optHtml = '<div class="msg-options">' +
+            options.map(o => `<button class="opt-btn" onclick="handleOption('${o.replace(/'/g,"\\'")}')"> ${o}</button>`).join('') +
+            '</div>';
+    }
+
+    div.innerHTML = `
+        <div class="msg-avatar">🧑‍💼</div>
+        <div class="msg-body">
+            <div class="msg-meta">
+                <span class="msg-name">出入境业务助手</span>
+                <span>${getTime()}</span>
+            </div>
+            <div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div>
+            ${optHtml}
+        </div>`;
+    container.appendChild(div);
+    scrollToBottom();
+    setProgress(progress);
+}
+
+function addUserMessage(text) {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'message user-message';
+    div.innerHTML = `
+        <div class="msg-avatar">👤</div>
+        <div class="msg-body">
+            <div class="msg-meta">
+                <span class="msg-name">您</span>
+                <span>${getTime()}</span>
+            </div>
+            <div class="msg-bubble">${text}</div>
+        </div>`;
+    container.appendChild(div);
+    scrollToBottom();
+}
+
+function showTyping() {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'message';
+    div.id = 'typing-indicator';
+    div.innerHTML = `
+        <div class="msg-avatar">🧑‍💼</div>
+        <div class="msg-body">
+            <div class="msg-meta"><span class="msg-name">出入境业务助手</span><span>正在输入…</span></div>
+            <div class="typing-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        </div>`;
+    container.appendChild(div);
+    scrollToBottom();
+}
+
+function hideTyping() {
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
+}
+
+function setProgress(pct) {
+    pct = Math.min(100, Math.max(0, pct));
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-pct').textContent = pct + '%';
+}
+
+function updateChecklist(key, checked) {
+    const el = document.getElementById('cl-' + key);
+    if (!el) return;
+    const cb = el.querySelector('.cb');
+    if (checked) {
+        el.classList.add('checked');
+        cb.textContent = '☑';
+    } else {
+        el.classList.remove('checked');
+        cb.textContent = '☐';
+    }
+}
+
+function resetChecklist() {
+    ['idCard','photo','form','appt'].forEach(k => updateChecklist(k, false));
+    setProgress(0);
+    // 重置流程步骤
+    [1,2,3,4].forEach(i => {
+        const el = document.getElementById('step-' + i);
+        if (el) { el.className = 'guide-item'; }
+    });
+    document.getElementById('step-1').classList.add('active');
+}
+
+function setGuideStep(n) {
+    [1,2,3,4].forEach(i => {
+        const el = document.getElementById('step-' + i);
+        if (!el) return;
+        el.classList.remove('active');
+        if (i < n) el.classList.add('completed');
+        else if (i === n) el.classList.add('active');
+    });
+}
+
+function setGuideCompleted(n) {
+    const el = document.getElementById('step-' + n);
+    if (el) { el.classList.remove('active'); el.classList.add('completed'); }
+}
+
+// ----------------------------------------------------------------
+// 事件处理
+// ----------------------------------------------------------------
+function handleOption(value) {
+    disableAllOptionBtns();
+    addUserMessage(value);
+    // 模拟打字延迟，增加真实感
+    showTyping();
+    document.getElementById('send-btn').disabled = true;
+    setTimeout(() => {
+        hideTyping();
+        const result = processMessage(value);
+        addAgentMessage(result.text, result.options, result.progress);
+        document.getElementById('send-btn').disabled = false;
+    }, 400 + Math.random() * 300);
+}
+
+function sendUserMessage() {
+    const input = document.getElementById('user-input');
+    const text = (input.value || '').trim();
+    if (!text) return;
+    input.value = '';
+    handleOption(text);
+}
+
+function quickSend(text) {
+    handleOption(text);
+}
+
+document.getElementById('user-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') sendUserMessage();
+});
+
+// ----------------------------------------------------------------
+// 时间显示
+// ----------------------------------------------------------------
+function updateTime() {
+    const el = document.getElementById('current-time');
+    if (el) {
+        el.textContent = new Date().toLocaleString('zh-CN', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+    }
+}
+setInterval(updateTime, 1000);
+updateTime();
+
+// ----------------------------------------------------------------
+// 初始化：显示欢迎语
+// ----------------------------------------------------------------
+window.addEventListener('DOMContentLoaded', () => {
+    showTyping();
+    setTimeout(() => {
+        hideTyping();
+        addAgentMessage(
+            '您好，欢迎咨询<b>港澳通行证（往来港澳通行证）</b>办理业务！\n\n我是出入境业务智能助手，将通过几个简单问题帮您<b>核查材料是否齐全</b>，让您少跑冤枉路。\n\n💡 本系统完全离线运行，无需网络，数据不上传。\n\n请问您需要：',
+            ['开始材料核查', '了解办理流程', '查询收费标准', '如何预约'], 0
+        );
+    }, 600);
+});
+</script>
+
+</body>
+</html>
